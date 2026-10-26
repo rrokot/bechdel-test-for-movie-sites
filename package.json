@@ -1,6 +1,6 @@
 {
   "name": "bechdel-test-for-movie-sites",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Chrome extension that shows Bechdel Test scores on movie catalogs and adds ratings and filters to bechdeltest.com",
   "license": "MIT",
