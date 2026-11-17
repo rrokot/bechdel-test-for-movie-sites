@@ -11,7 +11,7 @@ other sites.
 
 ## Install
 
-- **Chrome Web Store** — coming soon.
+- **[Chrome Web Store](https://chromewebstore.google.com/detail/bechdel-test-for-movie-si/ejfehpefannfcgfgphjojahbolaoojci)**
 - **From a release** — download `bechdel-test-for-movie-sites-*.zip` from the
   [latest release](https://github.com/rrokot/bechdel-test-for-movie-sites/releases/latest),
   unpack it, then open `chrome://extensions`, turn on **Developer mode** and
