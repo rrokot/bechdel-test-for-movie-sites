@@ -1,4 +1,4 @@
-import type { Movie, MovieView, Source, SourceState } from '../model.ts';
+import type { ErrorReason, MissingReason, Movie, MovieView, Source, SourceState } from '../model.ts';
 
 const SELECTORS = {
   row: '.movie',
@@ -7,7 +7,24 @@ const SELECTORS = {
   pageTitle: 'h1 > a[href*="imdb.com/title/"]',
 } as const;
 
-const LABELS: Record<Source, string> = { kp: 'KP', imdb: 'IMDb' };
+const LABELS: Record<Source, string> = { kinopoisk: 'KP', imdb: 'IMDb' };
+const SOURCE_NAMES: Record<Source, string> = { kinopoisk: 'Kinopoisk', imdb: 'IMDb' };
+
+const REASON_TEXTS: Record<MissingReason | ErrorReason, (sourceName: string) => string> = {
+  'no-rating': (sourceName) => `This title has no ${sourceName} rating yet`,
+  'no-verified-match': (sourceName) => `No verified ${sourceName} match was found`,
+  'source-unreachable': (sourceName) => `Could not reach ${sourceName}`,
+  'title-error': (sourceName) => `${sourceName} returned an error for this title`,
+  'search-metadata-missing': (sourceName) => `IMDb returned no metadata to search ${sourceName} with`,
+  'search-metadata-unreachable': (sourceName) => `Could not load IMDb metadata to search ${sourceName}`,
+  'search-unavailable': (sourceName) => `${sourceName} search is unavailable`,
+  'wikidata-unreachable': () => 'Could not reach Wikidata',
+  unexpected: () => 'Unexpected error',
+};
+
+export const describeReason = (source: Source, reason: MissingReason | ErrorReason) => (
+  REASON_TEXTS[reason](SOURCE_NAMES[source])
+);
 
 const TIERS = [
   { minimum: 8, name: 'excellent' },
@@ -42,15 +59,16 @@ const createBadge = (source: Source) => {
 };
 
 const createView = (anchor: Element, row: HTMLElement | null): MovieView => {
-  const badges = { kp: createBadge('kp'), imdb: createBadge('imdb') };
+  const badges = { kinopoisk: createBadge('kinopoisk'), imdb: createBadge('imdb') };
   const genres = document.createElement('span');
   genres.className = 'bte-genres';
-  anchor.before(badges.kp, badges.imdb);
+  anchor.before(badges.kinopoisk, badges.imdb);
   anchor.after(genres);
   return { row, badges, genres };
 };
 
-const badgeContent = (label: string, state: SourceState) => {
+const badgeContent = (source: Source, state: SourceState) => {
+  const label = LABELS[source];
   switch (state.status) {
     case 'loading':
       return { text: '…', title: `Loading ${label} rating`, href: null };
@@ -60,14 +78,14 @@ const badgeContent = (label: string, state: SourceState) => {
       return { text: rating, title: `${label} rating: ${rating}${votes}`, href: state.href };
     }
     case 'missing':
-      return { text: '—', title: `${label}: ${state.reason}`, href: state.href };
+      return { text: '—', title: `${label}: ${describeReason(source, state.reason)}`, href: state.href };
     case 'error':
-      return { text: '!', title: `${label}: ${state.reason}`, href: null };
+      return { text: '!', title: `${label}: ${describeReason(source, state.reason)}`, href: null };
   }
 };
 
 const renderBadge = (badge: HTMLAnchorElement, source: Source, state: SourceState) => {
-  const { text, title, href } = badgeContent(LABELS[source], state);
+  const { text, title, href } = badgeContent(source, state);
   badge.dataset.state = state.status;
   if (state.status === 'ready') badge.dataset.tier = ratingTier(state.rating);
   else delete badge.dataset.tier;
@@ -85,7 +103,7 @@ const renderBadge = (badge: HTMLAnchorElement, source: Source, state: SourceStat
 
 export const renderMovie = (movie: Movie) => {
   for (const view of movie.views) {
-    renderBadge(view.badges.kp, 'kp', movie.kp);
+    renderBadge(view.badges.kinopoisk, 'kinopoisk', movie.kinopoisk);
     renderBadge(view.badges.imdb, 'imdb', movie.imdb);
     view.genres.textContent = movie.genres?.join(', ') ?? '';
     view.genres.hidden = !movie.genres?.length;
@@ -101,7 +119,7 @@ export const collectMovies = (root: ParentNode) => {
       imdbId,
       bechdel,
       imdb: { status: 'loading' },
-      kp: { status: 'loading' },
+      kinopoisk: { status: 'loading' },
       genres: null,
       views: [],
     };

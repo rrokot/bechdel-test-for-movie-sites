@@ -43,22 +43,23 @@ describe('collectMovies', () => {
 
     expect([...movies.keys()]).toEqual(['tt0844760']);
     expect(movies.get('tt0844760')?.views[0]?.row).toBeNull();
-    expect(document.querySelector('h1 > .bte-badge[data-source="kp"]')).not.toBeNull();
+    expect(document.querySelector('h1 > .bte-badge[data-source="kinopoisk"]')).not.toBeNull();
   });
 
   it('renders every state of a badge', () => {
     const movie = collectMovies(document).get('tt32141377')!;
-    const [kp, imdb] = [movie.views[0]!.badges.kp, movie.views[0]!.badges.imdb];
-    expect(kp.dataset.state).toBe('loading');
+    const [kinopoisk, imdb] = [movie.views[0]!.badges.kinopoisk, movie.views[0]!.badges.imdb];
+    expect(kinopoisk.dataset.state).toBe('loading');
 
-    movie.kp = { status: 'ready', rating: 7.25, votes: 12345, href: 'https://www.kinopoisk.ru/film/1/' };
-    movie.imdb = { status: 'error', reason: 'Could not reach IMDb' };
+    movie.kinopoisk = { status: 'ready', rating: 7.25, votes: 12345, href: 'https://www.kinopoisk.ru/film/1/' };
+    movie.imdb = { status: 'error', reason: 'source-unreachable' };
     movie.genres = ['Horror', 'Thriller'];
     renderMovie(movie);
 
-    expect(kp).toMatchObject({ textContent: '7.3', title: 'KP rating: 7.3\nVotes: 12,345', href: 'https://www.kinopoisk.ru/film/1/' });
-    expect(kp.dataset.tier).toBe('good');
+    expect(kinopoisk).toMatchObject({ textContent: '7.3', title: 'KP rating: 7.3\nVotes: 12,345', href: 'https://www.kinopoisk.ru/film/1/' });
+    expect(kinopoisk.dataset.tier).toBe('good');
     expect(imdb.textContent).toBe('!');
+    expect(imdb.title).toBe('IMDb: Could not reach IMDb');
     expect(imdb.hasAttribute('href')).toBe(false);
     expect(movie.views[0]!.genres.textContent).toBe('Horror, Thriller');
   });
@@ -73,18 +74,18 @@ describe('filters', () => {
     imdbId: 'tt1',
     bechdel: 3,
     imdb: { status: 'ready', rating: 7, votes: null, href: '' },
-    kp: { status: 'ready', rating: 6, votes: null, href: '' },
+    kinopoisk: { status: 'ready', rating: 6, votes: null, href: '' },
     genres: ['Drama'],
     views: [],
     ...patch,
   });
 
   it('applies rating minimums only to loaded ratings', () => {
-    const filters = { ...DEFAULT_FILTERS, kpMin: 7 };
+    const filters = { ...DEFAULT_FILTERS, kinopoiskMin: 7 };
     expect(matchesFilters(movie({}), filters)).toBe(false);
-    expect(matchesFilters(movie({ kp: { status: 'loading' } }), filters)).toBe(true);
-    expect(matchesFilters(movie({ kp: { status: 'error', reason: '' } }), filters)).toBe(true);
-    expect(matchesFilters(movie({ kp: { status: 'missing', reason: '', href: null } }), filters)).toBe(false);
+    expect(matchesFilters(movie({ kinopoisk: { status: 'loading' } }), filters)).toBe(true);
+    expect(matchesFilters(movie({ kinopoisk: { status: 'error', reason: 'unexpected' } }), filters)).toBe(true);
+    expect(matchesFilters(movie({ kinopoisk: { status: 'missing', reason: 'no-rating', href: null } }), filters)).toBe(false);
   });
 
   it('applies the Bechdel minimum and genre exclusions', () => {
@@ -120,14 +121,14 @@ describe('mountPanel', () => {
     const select = list.querySelector('select')!;
     select.value = '8';
     select.dispatchEvent(new Event('change'));
-    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kpMin: 8, excludedGenres: ['Horror'] });
+    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kinopoiskMin: 8, excludedGenres: ['Horror'] });
 
     panel.setGenres(['Drama']);
     const options = [...list.querySelectorAll<HTMLButtonElement>('.bte-genre-option')];
     expect(options.map(({ value, ariaPressed }) => [value, ariaPressed])).toEqual([['Drama', 'false'], ['Horror', 'true']]);
 
     options[0]!.click();
-    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kpMin: 8, excludedGenres: ['Horror', 'Drama'] });
+    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kinopoiskMin: 8, excludedGenres: ['Horror', 'Drama'] });
 
     panel.setProgress({ total: 4, pending: 1, failed: 0 });
     expect(list.querySelector('.bte-status')?.textContent).toBe('Ratings 3 / 4');
@@ -166,7 +167,7 @@ describe('filter storage', () => {
     changeListener()({ filters: { newValue: own } }, 'sync');
     expect(listener).not.toHaveBeenCalled();
 
-    changeListener()({ filters: { newValue: { filters: { kpMin: 8 }, writer: 'another tab' } } }, 'sync');
-    expect(listener).toHaveBeenCalledWith({ ...DEFAULT_FILTERS, kpMin: 8 });
+    changeListener()({ filters: { newValue: { filters: { kinopoiskMin: 8 }, writer: 'another tab' } } }, 'sync');
+    expect(listener).toHaveBeenCalledWith({ ...DEFAULT_FILTERS, kinopoiskMin: 8 });
   });
 });

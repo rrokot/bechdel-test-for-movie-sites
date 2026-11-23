@@ -1,14 +1,14 @@
 import type { Movie, SourceState } from '../model.ts';
 
 export type Filters = {
-  kpMin: number | null;
+  kinopoiskMin: number | null;
   imdbMin: number | null;
   bechdelMin: number | null;
   excludedGenres: string[];
 };
 
 export const DEFAULT_FILTERS: Filters = {
-  kpMin: null,
+  kinopoiskMin: null,
   imdbMin: null,
   bechdelMin: null,
   excludedGenres: [],
@@ -52,7 +52,7 @@ const passesMinimum = (state: SourceState, minimum: number | null) => (
 
 export const matchesFilters = (movie: Movie, filters: Filters) => (
   (filters.bechdelMin === null || (movie.bechdel ?? -1) >= filters.bechdelMin)
-  && passesMinimum(movie.kp, filters.kpMin)
+  && passesMinimum(movie.kinopoisk, filters.kinopoiskMin)
   && passesMinimum(movie.imdb, filters.imdbMin)
   && !movie.genres?.some((genre) => filters.excludedGenres.includes(genre))
 );

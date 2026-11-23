@@ -26,16 +26,16 @@ const sparqlString = (value: string) => JSON.stringify(value);
 
 export const readKinopoiskIds = (bindings: Binding[]) => {
   const ids = new Map<string, string>();
-  for (const { imdb, kp } of bindings) {
-    if (imdb?.value && kp?.value) ids.set(imdb.value, kp.value);
+  for (const { imdb, kinopoisk } of bindings) {
+    if (imdb?.value && kinopoisk?.value) ids.set(imdb.value, kinopoisk.value);
   }
   return ids;
 };
 
 export const fetchKinopoiskIds = async (imdbIds: readonly string[]) => readKinopoiskIds(await querySparql(`
-  SELECT ?imdb ?kp WHERE {
+  SELECT ?imdb ?kinopoisk WHERE {
     VALUES ?imdb { ${imdbIds.map(sparqlString).join(' ')} }
-    ?item wdt:${IMDB_ID_PROPERTY} ?imdb; wdt:${KINOPOISK_ID_PROPERTY} ?kp.
+    ?item wdt:${IMDB_ID_PROPERTY} ?imdb; wdt:${KINOPOISK_ID_PROPERTY} ?kinopoisk.
   }
 `));
 

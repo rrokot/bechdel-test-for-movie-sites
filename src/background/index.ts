@@ -1,5 +1,5 @@
 import { pruneCaches } from '../shared/cache.ts';
-import { caches, imdbIdCache, imdbIdCacheKey } from '../shared/caches.ts';
+import { caches, imdbIdCache, imdbIdCacheKey } from '../sources/caches.ts';
 import { CONFIG, MINUTE_MS } from '../shared/config.ts';
 import { useTransport } from '../shared/http.ts';
 import type { Message, Reply, RequestType, Requests, TitleRef } from '../shared/messages.ts';

@@ -1,7 +1,6 @@
 import { clearCaches, countCacheEntries } from '../shared/cache.ts';
+import { BECHDELTEST_PAGES } from '../shared/config.ts';
 import { send, type BechdelStatus } from '../shared/messages.ts';
-
-const BECHDELTEST_TABS = ['https://bechdeltest.com/*', 'https://www.bechdeltest.com/*'];
 
 const requireElement = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 const dbStatus = requireElement('#db-status');
@@ -38,7 +37,7 @@ syncButton.addEventListener('click', async () => {
 clearButton.addEventListener('click', async () => {
   clearButton.disabled = true;
   await clearCaches();
-  const tabs = await chrome.tabs.query({ url: BECHDELTEST_TABS });
+  const tabs = await chrome.tabs.query({ url: BECHDELTEST_PAGES });
   await Promise.all(tabs.map(({ id }) => (id === undefined ? null : chrome.tabs.reload(id))));
   await renderCache();
 });

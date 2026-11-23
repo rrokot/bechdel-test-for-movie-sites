@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { imdbCache, kinopoiskCache } from '../src/shared/caches.ts';
+import { imdbCache, kinopoiskCache } from '../src/sources/caches.ts';
 import { loadImdb } from '../src/bechdeltest/loaders/imdb.ts';
 import { loadKinopoisk } from '../src/bechdeltest/loaders/kinopoisk.ts';
 import type { MoviePatch } from '../src/bechdeltest/model.ts';
@@ -14,7 +14,7 @@ const collect = () => {
 };
 
 const sparql = (pairs: [string, string][]) => JSON.stringify({
-  results: { bindings: pairs.map(([imdb, kp]) => ({ imdb: { value: imdb }, kp: { value: kp } })) },
+  results: { bindings: pairs.map(([imdb, kinopoisk]) => ({ imdb: { value: imdb }, kinopoisk: { value: kinopoisk } })) },
 });
 
 describe('loadKinopoisk', () => {
@@ -28,10 +28,10 @@ describe('loadKinopoisk', () => {
 
     await loadKinopoisk(['tt0111161', 'tt0000404'], update);
 
-    expect(patches.get('tt0111161')?.kp).toEqual({
+    expect(patches.get('tt0111161')?.kinopoisk).toEqual({
       status: 'ready', rating: 9.111, votes: 1150774, href: 'https://www.kinopoisk.ru/film/326/',
     });
-    expect(patches.get('tt0000404')?.kp).toMatchObject({ status: 'missing', href: 'https://www.kinopoisk.ru/film/404/' });
+    expect(patches.get('tt0000404')?.kinopoisk).toMatchObject({ status: 'missing', href: 'https://www.kinopoisk.ru/film/404/' });
     expect([...(await kinopoiskCache.getMany(['tt0111161', 'tt0000404'])).keys()]).toEqual(['tt0111161', 'tt0000404']);
   });
 
@@ -45,7 +45,7 @@ describe('loadKinopoisk', () => {
 
     await loadKinopoisk(['tt0111161'], update);
 
-    expect(patches.get('tt0111161')?.kp).toEqual({ status: 'missing', reason: 'No verified Kinopoisk match was found', href: null });
+    expect(patches.get('tt0111161')?.kinopoisk).toEqual({ status: 'missing', reason: 'no-verified-match', href: null });
     expect((await kinopoiskCache.getMany(['tt0111161'])).get('tt0111161')).toEqual({ kinopoiskId: null, rating: null, votes: null });
   });
 
@@ -57,7 +57,7 @@ describe('loadKinopoisk', () => {
 
     await loadKinopoisk(['tt0111161'], update);
 
-    expect(patches.get('tt0111161')?.kp).toMatchObject({ status: 'error' });
+    expect(patches.get('tt0111161')?.kinopoisk).toMatchObject({ status: 'error' });
     expect((await kinopoiskCache.getMany(['tt0111161'])).size).toBe(0);
   });
 
@@ -69,7 +69,7 @@ describe('loadKinopoisk', () => {
     await loadKinopoisk(['tt0111161'], update);
 
     expect(transport).not.toHaveBeenCalled();
-    expect(patches.get('tt0111161')?.kp).toMatchObject({ status: 'ready', rating: 9.1 });
+    expect(patches.get('tt0111161')?.kinopoisk).toMatchObject({ status: 'ready', rating: 9.1 });
   });
 });
 
@@ -86,7 +86,7 @@ describe('loadImdb', () => {
     expect(patches.get('tt0111161')).toMatchObject({ imdb: { status: 'ready', rating: 9.3 }, genres: ['Drama'] });
     expect(patches.get('tt0000001')).toMatchObject({ imdb: { status: 'missing' } });
     expect(patches.get('tt0000002')).toMatchObject({ imdb: { status: 'missing' }, genres: [] });
-    expect(patches.get('tt0000003')).toEqual({ imdb: { status: 'error', reason: 'IMDb returned an error for this title' } });
+    expect(patches.get('tt0000003')).toEqual({ imdb: { status: 'error', reason: 'title-error' } });
   });
 
   it('marks every title as failed when IMDb is unreachable', async () => {

@@ -5,9 +5,9 @@ import { collectMovies, renderMovie } from './ui/badges.ts';
 import { applyFilters, findList, loadFilters, onFiltersChanged, saveFilters, type Filters } from './ui/filters.ts';
 import { mountPanel } from './ui/panel.ts';
 
-const sourceErrorPatch = (source: Source, reason: string): MoviePatch => {
-  const state = { status: 'error', reason } as const;
-  return source === 'kp' ? { kp: state } : { imdb: state };
+const unexpectedErrorPatch = (source: Source): MoviePatch => {
+  const state = { status: 'error', reason: 'unexpected' } as const;
+  return source === 'kinopoisk' ? { kinopoisk: state } : { imdb: state };
 };
 
 const main = async () => {
@@ -58,11 +58,11 @@ const main = async () => {
     load([...movies.keys()], update).catch((error: unknown) => {
       console.error('[Bechdel ratings]', error);
       for (const movie of movies.values()) {
-        if (movie[source].status === 'loading') update(movie.imdbId, sourceErrorPatch(source, 'Unexpected error'));
+        if (movie[source].status === 'loading') update(movie.imdbId, unexpectedErrorPatch(source));
       }
     })
   );
-  await Promise.all([runLoader('imdb', loadImdb), runLoader('kp', loadKinopoisk)]);
+  await Promise.all([runLoader('imdb', loadImdb), runLoader('kinopoisk', loadKinopoisk)]);
 };
 
 void main();

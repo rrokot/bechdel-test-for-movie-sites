@@ -1,6 +1,6 @@
 {
   "head" : {
-    "vars" : [ "imdb", "kp" ]
+    "vars" : [ "imdb", "kinopoisk" ]
   },
   "results" : {
     "bindings" : [ {
@@ -8,7 +8,7 @@
         "type" : "literal",
         "value" : "tt0068646"
       },
-      "kp" : {
+      "kinopoisk" : {
         "type" : "literal",
         "value" : "325"
       }
@@ -17,7 +17,7 @@
         "type" : "literal",
         "value" : "tt0111161"
       },
-      "kp" : {
+      "kinopoisk" : {
         "type" : "literal",
         "value" : "326"
       }

@@ -27,6 +27,9 @@ export const URLS = {
   kinopoiskFilm: 'https://www.kinopoisk.ru/film',
 } as const;
 
+// Match patterns of the pages the bechdeltest content script runs on.
+export const BECHDELTEST_PAGES = ['https://bechdeltest.com/*', 'https://www.bechdeltest.com/*'];
+
 export const LINKS = {
   bechdeltestAdd: 'https://bechdeltest.com/add/',
   imdbTitle: 'https://www.imdb.com/title',

@@ -1,7 +1,6 @@
 import { SITES } from './catalog/sites.ts';
-import { FETCH_HOSTS } from './shared/config.ts';
+import { BECHDELTEST_PAGES, FETCH_HOSTS } from './shared/config.ts';
 
-const BECHDELTEST_PAGES = ['https://bechdeltest.com/*', 'https://www.bechdeltest.com/*'];
 const NAME = 'Bechdel Test for Movie Sites';
 const pattern = (host: string) => `https://${host}/*`;
 

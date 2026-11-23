@@ -3,11 +3,11 @@ import type { Filters } from './filters.ts';
 
 type Progress = ReturnType<typeof progress>;
 
-type NumericFilter = 'kpMin' | 'imdbMin' | 'bechdelMin';
+type NumericFilter = 'kinopoiskMin' | 'imdbMin' | 'bechdelMin';
 
 // Abbreviated labels get a tooltip that spells out what they filter by.
 const CONTROLS: { key: NumericFilter; label: string; title?: string; values: number[] }[] = [
-  { key: 'kpMin', label: 'KP ≥', title: 'Kinopoisk rating', values: [5, 6, 7, 8, 9] },
+  { key: 'kinopoiskMin', label: 'KP ≥', title: 'Kinopoisk rating', values: [5, 6, 7, 8, 9] },
   { key: 'imdbMin', label: 'IMDb ≥', values: [5, 6, 7, 8, 9] },
   { key: 'bechdelMin', label: 'B ≥', title: 'Bechdel Test score', values: [1, 2, 3] },
 ];

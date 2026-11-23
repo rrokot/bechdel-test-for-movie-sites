@@ -1,6 +1,6 @@
-import type { ImdbRating } from '../sources/imdb.ts';
-import { createCache } from './cache.ts';
-import { CONFIG } from './config.ts';
+import type { ImdbRating } from './imdb.ts';
+import { createCache } from '../shared/cache.ts';
+import { CONFIG } from '../shared/config.ts';
 
 export type KinopoiskEntry = {
   // null when no verified Kinopoisk title exists for the IMDb id.
