@@ -3,10 +3,10 @@ export const runPool = async <T>(
   concurrency: number,
   task: (item: T) => Promise<void>,
 ) => {
-  let next = 0;
+  let nextIndex = 0;
   const worker = async () => {
-    while (next < items.length) {
-      const item = items[next++] as T;
+    while (nextIndex < items.length) {
+      const item = items[nextIndex++] as T;
       await task(item);
     }
   };

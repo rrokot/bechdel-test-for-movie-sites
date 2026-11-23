@@ -10,18 +10,19 @@ export type KinopoiskEntry = {
 };
 
 const ttlByRating = ({ rating }: { rating: number | null }) => (
-  rating === null ? CONFIG.missCacheTtl : CONFIG.cacheTtl
+  rating === null ? CONFIG.missCacheTtlMs : CONFIG.cacheTtlMs
 );
 
 export const imdbCache = createCache<ImdbRating>({ name: 'imdb', version: 1, ttl: ttlByRating });
 // Version 2 drops entries that stored Kinopoisk's 0 as a rating.
 export const kinopoiskCache = createCache<KinopoiskEntry>({ name: 'kinopoisk', version: 2, ttl: ttlByRating });
 
-// Keyed by "<Wikidata property>:<catalog id>".
+export const imdbIdCacheKey = (wikidataProperty: string, catalogId: string) => `${wikidataProperty}:${catalogId}`;
+
 export const imdbIdCache = createCache<{ imdbId: string | null }>({
   name: 'imdb-id',
   version: 1,
-  ttl: ({ imdbId }) => (imdbId === null ? CONFIG.missCacheTtl : CONFIG.idCacheTtl),
+  ttl: ({ imdbId }) => (imdbId === null ? CONFIG.missCacheTtlMs : CONFIG.idCacheTtlMs),
 });
 
 export const caches = [imdbCache, kinopoiskCache, imdbIdCache];

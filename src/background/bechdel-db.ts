@@ -22,20 +22,24 @@ type Meta = {
   pages: Record<string, string>;
 };
 
-type Loaded = {
+type BechdelDb = {
   meta: Meta;
   pages: Map<string, BechdelMovie[]>;
-  index: Map<string, BechdelMovie>;
+  moviesByImdbId: Map<string, BechdelMovie>;
 };
 
+// The daily alarm normally keeps the copy fresh; the margin leaves it room
+// before a lookup triggers a sync of its own.
+const OVERDUE_AFTER_MS = CONFIG.bechdelSyncIntervalMs * 1.5;
+
 // Read from storage once per worker lifetime and replaced after every sync.
-let loaded: Promise<Loaded> | null = null;
+let db: Promise<BechdelDb> | null = null;
 let syncing: Promise<void> | null = null;
 
-const withIndex = (meta: Meta, pages: Map<string, BechdelMovie[]>): Loaded => ({
+const buildDb = (meta: Meta, pages: Map<string, BechdelMovie[]>): BechdelDb => ({
   meta,
   pages,
-  index: new Map([...pages.values()].flatMap((movies) => movies.map((movie) => [movie.imdbId, movie]))),
+  moviesByImdbId: new Map([...pages.values()].flatMap((movies) => movies.map((movie) => [movie.imdbId, movie]))),
 });
 
 const readStorage = async () => {
@@ -47,19 +51,19 @@ const readStorage = async () => {
     const movies = stored[pageKey(url)] as BechdelMovie[] | undefined;
     return movies ? [[url, movies] as const] : [];
   }));
-  return withIndex(meta, pages);
+  return buildDb(meta, pages);
 };
 
-const load = () => {
-  loaded ??= readStorage();
-  return loaded;
+const loadDb = () => {
+  db ??= readStorage();
+  return db;
 };
 
 const runSync = async () => {
   const listPages = parseSitemap((await request(URLS.bechdeltestSitemap)).text);
   if (!listPages.length) throw new Error('The bechdeltest.com sitemap lists no movie pages');
 
-  const previous = await load();
+  const previous = await loadDb();
   const pages = new Map<string, BechdelMovie[]>();
   const changed: Record<string, BechdelMovie[]> = {};
   const meta: Meta = { syncedAt: previous.meta.syncedAt, pages: {} };
@@ -92,7 +96,7 @@ const runSync = async () => {
   const dropped = [...previous.pages.keys()].filter((url) => !pages.has(url)).map(pageKey);
   await chrome.storage.local.set({ ...changed, [META_KEY]: meta });
   if (dropped.length) await chrome.storage.local.remove(dropped);
-  loaded = Promise.resolve(withIndex(meta, pages));
+  db = Promise.resolve(buildDb(meta, pages));
 };
 
 export const syncBechdelDb = () => {
@@ -112,20 +116,20 @@ export const dropRetiredBechdelDb = async () => {
 // The first lookup waits for a full download; later ones answer from the
 // current copy and refresh it in the background when it is overdue.
 const ensureFresh = async () => {
-  const { meta, pages } = await load();
+  const { meta, pages } = await loadDb();
   if (!pages.size) {
     await syncBechdelDb();
-  } else if (meta.syncedAt === null || Date.now() - meta.syncedAt > CONFIG.bechdelSyncInterval * 1.5) {
+  } else if (meta.syncedAt === null || Date.now() - meta.syncedAt > OVERDUE_AFTER_MS) {
     syncBechdelDb().catch((error: unknown) => console.warn('[Bechdel] Sync failed', error));
   }
 };
 
 export const findBechdelMovie = async (imdbId: string) => {
   await ensureFresh();
-  return (await load()).index.get(imdbId) ?? null;
+  return (await loadDb()).moviesByImdbId.get(imdbId) ?? null;
 };
 
 export const bechdelStatus = async (): Promise<BechdelStatus> => {
-  const { meta, index } = await load();
-  return { movies: index.size, syncedAt: meta.syncedAt, syncing: syncing !== null };
+  const { meta, moviesByImdbId } = await loadDb();
+  return { movies: moviesByImdbId.size, syncedAt: meta.syncedAt, syncing: syncing !== null };
 };

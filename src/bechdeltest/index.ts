@@ -5,7 +5,7 @@ import { collectMovies, renderMovie } from './ui/badges.ts';
 import { applyFilters, findList, loadFilters, onFiltersChanged, saveFilters, type Filters } from './ui/filters.ts';
 import { mountPanel } from './ui/panel.ts';
 
-const sourcePatch = (source: Source, reason: string): MoviePatch => {
+const sourceErrorPatch = (source: Source, reason: string): MoviePatch => {
   const state = { status: 'error', reason } as const;
   return source === 'kp' ? { kp: state } : { imdb: state };
 };
@@ -33,10 +33,10 @@ const main = async () => {
   });
 
   // Ratings arrive one by one; coalesce re-filtering into one pass per frame.
-  let frame = 0;
+  let refreshFrame = 0;
   function scheduleRefresh() {
-    frame ||= requestAnimationFrame(() => {
-      frame = 0;
+    refreshFrame ||= requestAnimationFrame(() => {
+      refreshFrame = 0;
       if (!list || !panel) return;
       applyFilters(list, movies.values(), filters);
       panel.setGenres([...movies.values()].flatMap(({ genres }) => genres ?? []));
@@ -54,15 +54,15 @@ const main = async () => {
   };
 
   // Whatever goes wrong inside a loader, no badge may stay "loading" forever.
-  const run = (source: Source, load: (ids: string[], update: Update) => Promise<void>) => (
+  const runLoader = (source: Source, load: (ids: string[], update: Update) => Promise<void>) => (
     load([...movies.keys()], update).catch((error: unknown) => {
       console.error('[Bechdel ratings]', error);
       for (const movie of movies.values()) {
-        if (movie[source].status === 'loading') update(movie.imdbId, sourcePatch(source, 'Unexpected error'));
+        if (movie[source].status === 'loading') update(movie.imdbId, sourceErrorPatch(source, 'Unexpected error'));
       }
     })
   );
-  await Promise.all([run('imdb', loadImdb), run('kp', loadKinopoisk)]);
+  await Promise.all([runLoader('imdb', loadImdb), runLoader('kp', loadKinopoisk)]);
 };
 
 void main();

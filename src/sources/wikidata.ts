@@ -4,12 +4,13 @@ import { parseJson, request } from '../shared/http.ts';
 type Binding = Record<string, { value?: string } | undefined>;
 type SparqlResponse = { results?: { bindings?: Binding[] } };
 
-const IMDB_ID = 'P345';
-const KINOPOISK_ID = 'P2603';
+const IMDB_ID_PROPERTY = 'P345';
+const KINOPOISK_ID_PROPERTY = 'P2603';
+const WIKIDATA_PROPERTY = /^P\d+$/;
 
 export const readBindings = (json: unknown) => (json as SparqlResponse)?.results?.bindings ?? [];
 
-const sparql = async (query: string) => {
+const querySparql = async (query: string) => {
   const { text } = await request(URLS.wikidataSparql, {
     method: 'POST',
     headers: {
@@ -21,7 +22,7 @@ const sparql = async (query: string) => {
   return readBindings(parseJson(text, 'Wikidata'));
 };
 
-const literal = (value: string) => JSON.stringify(value);
+const sparqlString = (value: string) => JSON.stringify(value);
 
 export const readKinopoiskIds = (bindings: Binding[]) => {
   const ids = new Map<string, string>();
@@ -31,19 +32,19 @@ export const readKinopoiskIds = (bindings: Binding[]) => {
   return ids;
 };
 
-export const fetchKinopoiskIds = async (imdbIds: readonly string[]) => readKinopoiskIds(await sparql(`
+export const fetchKinopoiskIds = async (imdbIds: readonly string[]) => readKinopoiskIds(await querySparql(`
   SELECT ?imdb ?kp WHERE {
-    VALUES ?imdb { ${imdbIds.map(literal).join(' ')} }
-    ?item wdt:${IMDB_ID} ?imdb; wdt:${KINOPOISK_ID} ?kp.
+    VALUES ?imdb { ${imdbIds.map(sparqlString).join(' ')} }
+    ?item wdt:${IMDB_ID_PROPERTY} ?imdb; wdt:${KINOPOISK_ID_PROPERTY} ?kp.
   }
 `));
 
 // Maps a catalog's own id (a Wikidata external-id property) to an IMDb id.
 // Resolves to null when Wikidata has no single answer.
-export const resolveImdbId = async (property: string, id: string) => {
-  if (!/^P\d+$/.test(property)) throw new Error(`Invalid Wikidata property: ${property}`);
-  const imdbIds = new Set((await sparql(`
-    SELECT ?imdb WHERE { ?item wdt:${property} ${literal(id)}; wdt:${IMDB_ID} ?imdb. }
+export const resolveImdbId = async (catalogProperty: string, catalogId: string) => {
+  if (!WIKIDATA_PROPERTY.test(catalogProperty)) throw new Error(`Invalid Wikidata property: ${catalogProperty}`);
+  const imdbIds = new Set((await querySparql(`
+    SELECT ?imdb WHERE { ?item wdt:${catalogProperty} ${sparqlString(catalogId)}; wdt:${IMDB_ID_PROPERTY} ?imdb. }
   `)).map(({ imdb }) => imdb?.value).filter((value) => value?.startsWith('tt')));
   return imdbIds.size === 1 ? [...imdbIds][0]! : null;
 };

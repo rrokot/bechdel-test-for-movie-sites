@@ -20,7 +20,7 @@ const STORAGE_KEY = 'filters';
 // back to the writer too, and late reports of a tab's own earlier writes must
 // not undo the changes it made since.
 type Stored = { filters: Partial<Filters>; writer: string };
-const WRITER = crypto.randomUUID();
+const THIS_TAB_WRITER = crypto.randomUUID();
 
 const withDefaults = (value: Partial<Filters> | undefined): Filters => ({ ...DEFAULT_FILTERS, ...value });
 
@@ -29,14 +29,14 @@ export const loadFilters = async () => (
 );
 
 export const saveFilters = (filters: Filters) => (
-  chrome.storage.sync.set({ [STORAGE_KEY]: { filters, writer: WRITER } satisfies Stored })
+  chrome.storage.sync.set({ [STORAGE_KEY]: { filters, writer: THIS_TAB_WRITER } satisfies Stored })
 );
 
 // Keeps every open bechdeltest tab on the same filters.
 export const onFiltersChanged = (listener: (filters: Filters) => void) => {
   chrome.storage.onChanged.addListener((changes, area) => {
     const stored = changes[STORAGE_KEY]?.newValue as Stored | undefined;
-    if (area === 'sync' && stored && stored.writer !== WRITER) listener(withDefaults(stored.filters));
+    if (area === 'sync' && stored && stored.writer !== THIS_TAB_WRITER) listener(withDefaults(stored.filters));
   });
 };
 
@@ -70,7 +70,7 @@ export const findList = (movies: Iterable<Movie>) => {
 const updateYearGroups = (list: HTMLElement) => {
   let heading: HTMLElement | null = null;
   let members: HTMLElement[] = [];
-  const close = () => {
+  const hideGroupIfNoVisibleMovies = () => {
     if (!heading) return;
     const empty = !members.some((element) => element.matches('.movie') && !element.hidden);
     heading.hidden = empty;
@@ -79,14 +79,14 @@ const updateYearGroups = (list: HTMLElement) => {
 
   for (const element of list.children as HTMLCollectionOf<HTMLElement>) {
     if (element.tagName === 'H2') {
-      close();
+      hideGroupIfNoVisibleMovies();
       heading = element;
       members = [];
     } else if (heading) {
       members.push(element);
     }
   }
-  close();
+  hideGroupIfNoVisibleMovies();
 };
 
 export const applyFilters = (list: HTMLElement, movies: Iterable<Movie>, filters: Filters) => {

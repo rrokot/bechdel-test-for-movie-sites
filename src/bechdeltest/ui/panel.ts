@@ -23,7 +23,7 @@ type Props = Partial<{
   hidden: boolean;
 }>;
 
-const element = <K extends keyof HTMLElementTagNameMap>(
+const createElement = <K extends keyof HTMLElementTagNameMap>(
   tag: K,
   props: Props = {},
   children: (Node | string)[] = [],
@@ -33,9 +33,9 @@ const element = <K extends keyof HTMLElementTagNameMap>(
   return node;
 };
 
-const createSelect = (values: number[]) => element('select', {}, [
-  element('option', { value: '', textContent: '-' }),
-  ...values.map((value) => element('option', { value: String(value), textContent: String(value) })),
+const createSelect = (values: number[]) => createElement('select', {}, [
+  createElement('option', { value: '', textContent: '-' }),
+  ...values.map((value) => createElement('option', { value: String(value), textContent: String(value) })),
 ]);
 
 export const mountPanel = (
@@ -44,7 +44,7 @@ export const mountPanel = (
   onChange: (filters: Filters) => void,
 ) => {
   let filters = initial;
-  let knownGenres = '';
+  let renderedGenresKey = '';
 
   const commit = (patch: Partial<Filters>) => {
     filters = { ...filters, ...patch };
@@ -57,13 +57,13 @@ export const mountPanel = (
     return [key, select];
   }));
 
-  const genreSummary = element('summary');
-  const genreOptions = element('div', { className: 'bte-genre-options' });
-  const status = element('span', { className: 'bte-status', role: 'status', ariaLive: 'polite', hidden: true });
+  const genreSummary = createElement('summary');
+  const genreOptions = createElement('div', { className: 'bte-genre-options' });
+  const status = createElement('span', { className: 'bte-status', role: 'status', ariaLive: 'polite', hidden: true });
 
-  const panel = element('div', { className: 'bte-filters' }, [
-    ...CONTROLS.map(({ key, label, title }) => element('label', title ? { title } : {}, [label, selects.get(key)!])),
-    element('details', { className: 'bte-genre-filter' }, [genreSummary, genreOptions]),
+  const panel = createElement('div', { className: 'bte-filters' }, [
+    ...CONTROLS.map(({ key, label, title }) => createElement('label', title ? { title } : {}, [label, selects.get(key)!])),
+    createElement('details', { className: 'bte-genre-filter' }, [genreSummary, genreOptions]),
     status,
   ]);
 
@@ -91,10 +91,10 @@ export const mountPanel = (
 
   const setGenres = (genres: string[]) => {
     const sorted = [...new Set([...genres, ...filters.excludedGenres])].sort((a, b) => a.localeCompare(b));
-    if (sorted.join('|') === knownGenres) return;
-    knownGenres = sorted.join('|');
+    if (sorted.join('|') === renderedGenresKey) return;
+    renderedGenresKey = sorted.join('|');
     genreOptions.replaceChildren(...sorted.map((genre) => {
-      const button = element('button', { type: 'button', className: 'bte-genre-option', value: genre, textContent: genre });
+      const button = createElement('button', { type: 'button', className: 'bte-genre-option', value: genre, textContent: genre });
       button.addEventListener('click', () => {
         toggleGenre(genre);
         renderGenreState();

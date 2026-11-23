@@ -1,6 +1,6 @@
 import { pruneCaches } from '../shared/cache.ts';
-import { caches, imdbIdCache } from '../shared/caches.ts';
-import { CONFIG } from '../shared/config.ts';
+import { caches, imdbIdCache, imdbIdCacheKey } from '../shared/caches.ts';
+import { CONFIG, MINUTE_MS } from '../shared/config.ts';
 import { useTransport } from '../shared/http.ts';
 import type { Message, Reply, RequestType, Requests, TitleRef } from '../shared/messages.ts';
 import { resolveImdbId } from '../sources/wikidata.ts';
@@ -11,9 +11,9 @@ const MAINTENANCE_ALARM = 'daily-maintenance';
 
 useTransport(fetchDirect);
 
-const resolveRef = async (ref: TitleRef) => {
+const resolveTitleRefToImdbId = async (ref: TitleRef) => {
   if ('imdbId' in ref) return ref.imdbId;
-  const key = `${ref.property}:${ref.id}`;
+  const key = imdbIdCacheKey(ref.property, ref.id);
   const cached = (await imdbIdCache.getMany([key])).get(key);
   if (cached) return cached.imdbId ?? ref.imdbHint ?? null;
   try {
@@ -32,7 +32,7 @@ type Handlers = { [K in RequestType]: (message: Message<K>) => Promise<Requests[
 const handlers: Handlers = {
   fetch: ({ type, ...request }) => fetchDirect(request),
   'bechdel:find': async ({ ref }) => {
-    const imdbId = await resolveRef(ref);
+    const imdbId = await resolveTitleRefToImdbId(ref);
     return { imdbId, movie: imdbId ? await findBechdelMovie(imdbId) : null };
   },
   'bechdel:status': () => bechdelStatus(),
@@ -52,30 +52,29 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse: (r
   return true;
 });
 
-const warn = (error: unknown) => console.warn('[Bechdel] Maintenance failed', error);
+const warnMaintenanceFailed = (error: unknown) => console.warn('[Bechdel] Maintenance failed', error);
 
-// Daily: refresh the Bechdel copy and drop expired cache entries.
-const maintain = () => {
-  pruneCaches(caches).catch(warn);
-  syncBechdelDb().catch(warn);
+const runDailyMaintenance = () => {
+  pruneCaches(caches).catch(warnMaintenanceFailed);
+  syncBechdelDb().catch(warnMaintenanceFailed);
 };
 
-const ensureAlarm = async () => {
+const ensureMaintenanceAlarm = async () => {
   if (!await chrome.alarms.get(MAINTENANCE_ALARM)) {
-    await chrome.alarms.create(MAINTENANCE_ALARM, { periodInMinutes: CONFIG.bechdelSyncInterval / 60_000 });
+    await chrome.alarms.create(MAINTENANCE_ALARM, { periodInMinutes: CONFIG.bechdelSyncIntervalMs / MINUTE_MS });
   }
 };
 
 // Alarms and storage outlive updates: after one, keep only what this version
 // uses.
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.clearAll().then(ensureAlarm).catch(warn);
-  dropRetiredBechdelDb().catch(warn);
-  maintain();
+  chrome.alarms.clearAll().then(ensureMaintenanceAlarm).catch(warnMaintenanceFailed);
+  dropRetiredBechdelDb().catch(warnMaintenanceFailed);
+  runDailyMaintenance();
 });
 chrome.alarms.onAlarm.addListener(({ name }) => {
-  if (name === MAINTENANCE_ALARM) maintain();
+  if (name === MAINTENANCE_ALARM) runDailyMaintenance();
 });
 
-// Alarms may be dropped on browser restart; make sure the daily one exists.
-ensureAlarm().catch(warn);
+// Alarms may be dropped on browser restart.
+ensureMaintenanceAlarm().catch(warnMaintenanceFailed);

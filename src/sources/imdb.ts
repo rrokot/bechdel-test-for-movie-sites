@@ -14,16 +14,16 @@ export type ImdbMetadata = {
   directors: string[];
 };
 
-type Text = { text?: string | null } | null;
+type TextField = { text?: string | null } | null;
 
 export type RawTitle = {
   ratingsSummary?: { aggregateRating?: number | null; voteCount?: number | null } | null;
   genres?: { genres?: { text?: string | null }[] | null } | null;
-  titleText?: Text;
-  originalTitleText?: Text;
+  titleText?: TextField;
+  originalTitleText?: TextField;
   releaseYear?: { year?: number | null } | null;
   principalCredits?: {
-    credits?: { category?: { id?: string } | null; name?: { nameText?: Text } | null }[] | null;
+    credits?: { category?: { id?: string } | null; name?: { nameText?: TextField } | null }[] | null;
   }[] | null;
 };
 
@@ -32,9 +32,10 @@ type GraphqlResponse = {
   errors?: { message?: string; path?: unknown[] }[];
 };
 
-const alias = (index: number) => `t${index}`;
-const finite = (value: unknown) => (Number.isFinite(value) ? value as number : null);
-const integer = (value: unknown) => (Number.isInteger(value) ? value as number : null);
+const TITLE_ALIAS = /^t\d+$/;
+const titleAlias = (index: number) => `t${index}`;
+const finiteOrNull = (value: unknown) => (Number.isFinite(value) ? value as number : null);
+const integerOrNull = (value: unknown) => (Number.isInteger(value) ? value as number : null);
 
 // IMDb answers a batch with per-alias errors. A title whose alias failed is
 // left out of the result; a title that does not exist maps to null.
@@ -53,14 +54,14 @@ export const readTitles = (ids: readonly string[], json: unknown) => {
 
   const titles = new Map<string, RawTitle | null>();
   ids.forEach((id, index) => {
-    if (!failed.has(alias(index))) titles.set(id, data[alias(index)] ?? null);
+    if (!failed.has(titleAlias(index))) titles.set(id, data[titleAlias(index)] ?? null);
   });
   return titles;
 };
 
 const queryTitles = async (ids: readonly string[], selection: string) => {
   const fields = ids
-    .map((id, index) => `${alias(index)}: title(id: ${JSON.stringify(id)}) { ${selection} }`)
+    .map((id, index) => `${titleAlias(index)}: title(id: ${JSON.stringify(id)}) { ${selection} }`)
     .join('\n');
   const { text } = await request(URLS.imdbGraphql, {
     method: 'POST',
@@ -75,8 +76,8 @@ const mapValues = <K, V, R>(map: Map<K, V>, transform: (value: V) => R) => (
 );
 
 export const toRating = (title: RawTitle | null): ImdbRating => ({
-  rating: finite(title?.ratingsSummary?.aggregateRating),
-  votes: finite(title?.ratingsSummary?.voteCount),
+  rating: finiteOrNull(title?.ratingsSummary?.aggregateRating),
+  votes: finiteOrNull(title?.ratingsSummary?.voteCount),
   genres: (title?.genres?.genres ?? [])
     .map((genre) => genre.text)
     .filter((text): text is string => Boolean(text))
@@ -86,7 +87,7 @@ export const toRating = (title: RawTitle | null): ImdbRating => ({
 export const toMetadata = (title: RawTitle | null): ImdbMetadata => ({
   title: title?.titleText?.text ?? '',
   originalTitle: title?.originalTitleText?.text ?? '',
-  year: integer(title?.releaseYear?.year),
+  year: integerOrNull(title?.releaseYear?.year),
   directors: (title?.principalCredits ?? [])
     .flatMap((group) => group.credits ?? [])
     .filter((credit) => credit.category?.id === 'director')

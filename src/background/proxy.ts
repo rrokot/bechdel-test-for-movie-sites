@@ -48,7 +48,7 @@ export const fetchDirect = async ({ url, method, headers, body }: FetchRequest):
       body,
       // Kinopoisk only serves pages to browsers that already passed its SSO.
       credentials: 'include',
-      signal: AbortSignal.timeout(CONFIG.requestTimeout),
+      signal: AbortSignal.timeout(CONFIG.requestTimeoutMs),
     });
     return { ok: true, status: response.status, url: response.url, text: await response.text() };
   } catch (error) {

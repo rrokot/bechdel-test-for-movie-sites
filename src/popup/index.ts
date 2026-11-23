@@ -3,11 +3,11 @@ import { send, type BechdelStatus } from '../shared/messages.ts';
 
 const BECHDELTEST_TABS = ['https://bechdeltest.com/*', 'https://www.bechdeltest.com/*'];
 
-const element = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
-const dbStatus = element('#db-status');
-const syncButton = element<HTMLButtonElement>('#sync');
-const cacheStatus = element('#cache-status');
-const clearButton = element<HTMLButtonElement>('#clear-cache');
+const requireElement = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+const dbStatus = requireElement('#db-status');
+const syncButton = requireElement<HTMLButtonElement>('#sync');
+const cacheStatus = requireElement('#cache-status');
+const clearButton = requireElement<HTMLButtonElement>('#clear-cache');
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const numberFormat = new Intl.NumberFormat();

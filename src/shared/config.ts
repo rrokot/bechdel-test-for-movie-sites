@@ -1,11 +1,12 @@
-const DAY = 24 * 60 * 60 * 1000;
+export const MINUTE_MS = 60 * 1000;
+const DAY_MS = 24 * 60 * MINUTE_MS;
 
 export const CONFIG = {
-  requestTimeout: 20_000,
-  cacheTtl: 7 * DAY,
-  missCacheTtl: DAY,
-  idCacheTtl: 30 * DAY,
-  bechdelSyncInterval: DAY,
+  requestTimeoutMs: 20_000,
+  cacheTtlMs: 7 * DAY_MS,
+  missCacheTtlMs: DAY_MS,
+  idCacheTtlMs: 30 * DAY_MS,
+  bechdelSyncIntervalMs: DAY_MS,
   bechdelSyncConcurrency: 2,
   kinopoiskConcurrency: 10,
   kinopoiskSearchConcurrency: 1,

@@ -7,9 +7,15 @@ export type Candidate = {
 export type FilmPage = Candidate & { directors: string[] };
 
 const YEAR = /\b(?:18|19|20)\d{2}\b/;
+const TRAILING_YEAR_IN_PARENS = /\s*\((?:18|19|20)\d{2}\)\s*$/;
+const FILM_ID_IN_PATH = /\/film\/(\d+)(?:\/|$)/;
+const PERSON_ID_IN_PATH = /\/name\/(\d+)/;
+// "142 мин": a number followed by a unit word.
+const RUNNING_TIME = /^\d+\s*\D+$/u;
+const TRAILING_RUNNING_TIME = /,\s*\d+\s*\D+$/u;
 
 export const filmIdFromUrl = (url: string | null | undefined) => (
-  url?.match(/\/film\/(\d+)(?:\/|$)/)?.[1] ?? null
+  url?.match(FILM_ID_IN_PATH)?.[1] ?? null
 );
 
 const parseYear = (text: string | null | undefined) => {
@@ -17,7 +23,7 @@ const parseYear = (text: string | null | undefined) => {
   return Number.isInteger(year) ? year : null;
 };
 
-const html = (text: string) => new DOMParser().parseFromString(text, 'text/html');
+const parseHtml = (text: string) => new DOMParser().parseFromString(text, 'text/html');
 
 // Film pages render person names in Russian; the original spelling only lives
 // in the embedded Apollo state, keyed by person id.
@@ -34,17 +40,17 @@ const originalPersonName = (pageText: string, personId: string) => {
 };
 
 export const parseFilmPage = (pageText: string, pageUrl: string): FilmPage | null => {
-  const page = html(pageText);
+  const page = parseHtml(pageText);
   const kinopoiskId = filmIdFromUrl(pageUrl)
     ?? filmIdFromUrl(page.querySelector('link[rel="canonical"]')?.getAttribute('href'));
   if (!kinopoiskId) return null;
 
   const heading = page.querySelector('h1')?.textContent
-    ?.replace(/\s*\((?:18|19|20)\d{2}\)\s*$/, '')
+    ?.replace(TRAILING_YEAR_IN_PARENS, '')
     .trim();
   const directors = [...page.querySelectorAll('[data-test-id="directors"] a[href*="/name/"]')]
     .flatMap((link) => {
-      const personId = link.getAttribute('href')?.match(/\/name\/(\d+)/)?.[1];
+      const personId = link.getAttribute('href')?.match(PERSON_ID_IN_PATH)?.[1];
       return [link.textContent, personId ? originalPersonName(pageText, personId) : ''];
     })
     .filter((name): name is string => Boolean(name));
@@ -62,12 +68,12 @@ export const parseFilmPage = (pageText: string, pageUrl: string): FilmPage | nul
 // running time, which must not be mistaken for a title.
 const originalTitleFromSubtitle = (text: string | null | undefined) => {
   const subtitle = text?.trim() ?? '';
-  if (/^\d+\s*\D+$/u.test(subtitle)) return '';
-  return subtitle.replace(/,\s*\d+\s*\D+$/u, '').trim();
+  if (RUNNING_TIME.test(subtitle)) return '';
+  return subtitle.replace(TRAILING_RUNNING_TIME, '').trim();
 };
 
 export const parseSearchResults = (pageText: string): Candidate[] => (
-  [...html(pageText).querySelectorAll('.element')].flatMap((element) => {
+  [...parseHtml(pageText).querySelectorAll('.element')].flatMap((element) => {
     const link = element.querySelector<HTMLElement>('.info .name a[data-id]');
     const kinopoiskId = link?.dataset.id ?? filmIdFromUrl(link?.getAttribute('href'));
     if (!kinopoiskId) return [];
