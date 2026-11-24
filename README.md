@@ -44,11 +44,13 @@ them.
 
 ![Ratings and filters on bechdeltest.com](store/screenshots/1-bechdeltest-ratings.png)
 
-- Kinopoisk (KP) and IMDb ratings before each movie title, color-coded and
+- Bechdel scores shown as red (0–1), yellow (2) and green (3) icons, with a
+  question mark when contributors dispute a 3
+- IMDb and Kinopoisk (KP) ratings before each movie title, color-coded and
   linked to the title pages
 - Up to three IMDb genres per movie
-- Filters by minimum KP rating, IMDb rating and Bechdel score, plus genre
-  exclusion; settings sync across tabs and devices
+- Filters by minimum Bechdel score, IMDb rating and KP rating right above
+  their columns, plus genre exclusion; settings sync across tabs and devices
 
 Ratings that are still loading or failed to load never hide a movie.
 

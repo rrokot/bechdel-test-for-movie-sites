@@ -33,9 +33,10 @@ popular movie sites; the full list is on the project page:
 https://github.com/rrokot/bechdel-test-for-movie-sites
 
 ON BECHDELTEST.COM
+• Bechdel scores as red, yellow and green icons, so 0, 1 and 2 no longer look alike
 • IMDb and Kinopoisk ratings before every movie, color-coded and linked
 • Up to three genres per movie
-• Filters by minimum IMDb rating, Kinopoisk rating and Bechdel score
+• Filters by minimum Bechdel score, IMDb rating and Kinopoisk rating
 • Genre exclusion, for example to hide horror movies
 • Filters are remembered and synced between your devices
 
