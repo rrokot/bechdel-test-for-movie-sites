@@ -65,7 +65,12 @@ const queryTitles = async (ids: readonly string[], selection: string) => {
     .join('\n');
   const { text } = await request(URLS.imdbGraphql, {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      // IMDb returns HTTP 403 without its web client identifier.
+      'x-imdb-client-name': 'imdb-web-next',
+    },
     body: JSON.stringify({ query: `query { ${fields} }` }),
   });
   return readTitles(ids, parseJson(text, 'IMDb'));

@@ -29,6 +29,6 @@ export const createManifest = (version: string): chrome.runtime.ManifestV3 => ({
       run_at: 'document_idle',
     },
   ],
-  permissions: ['storage', 'alarms', 'declarativeNetRequestWithHostAccess'],
+  permissions: ['storage', 'alarms'],
   host_permissions: [...new Set([...BECHDELTEST_PAGES, ...FETCH_HOSTS.map(pattern)])],
 });

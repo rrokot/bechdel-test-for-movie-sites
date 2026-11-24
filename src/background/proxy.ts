@@ -1,34 +1,6 @@
 import { CONFIG, FETCH_HOSTS } from '../shared/config.ts';
 import type { FetchRequest, FetchResponse } from '../shared/messages.ts';
 
-const { HeaderOperation, ResourceType, RuleActionType } = chrome.declarativeNetRequest;
-
-// IMDb GraphQL rejects requests whose Origin is not IMDb, and fetch() cannot
-// set Origin itself. The rule only touches requests made outside of tabs,
-// which is where this service worker's fetches come from.
-const IMDB_ORIGIN_RULE: chrome.declarativeNetRequest.Rule = {
-  id: 1,
-  action: {
-    type: RuleActionType.MODIFY_HEADERS,
-    requestHeaders: [
-      { header: 'origin', operation: HeaderOperation.SET, value: 'https://www.imdb.com' },
-      { header: 'referer', operation: HeaderOperation.SET, value: 'https://www.imdb.com/' },
-    ],
-  },
-  condition: {
-    requestDomains: ['api.graphql.imdb.com'],
-    resourceTypes: [ResourceType.XMLHTTPREQUEST],
-    tabIds: [chrome.tabs.TAB_ID_NONE],
-  },
-};
-
-// Session rules do not survive a browser restart, so they are installed every
-// time the worker starts; fetches wait for them.
-const rulesReady = chrome.declarativeNetRequest.updateSessionRules({
-  removeRuleIds: [IMDB_ORIGIN_RULE.id],
-  addRules: [IMDB_ORIGIN_RULE],
-}).catch((error: unknown) => console.error('[Bechdel] Could not install the IMDb rule', error));
-
 const ALLOWED_HOSTS = new Set(FETCH_HOSTS);
 
 export const fetchDirect = async ({ url, method, headers, body }: FetchRequest): Promise<FetchResponse> => {
@@ -40,7 +12,6 @@ export const fetchDirect = async ({ url, method, headers, body }: FetchRequest):
     return { ok: false, reason: 'forbidden', message: `Method is not allowed: ${String(method)}` };
   }
 
-  await rulesReady;
   try {
     const response = await fetch(target, {
       method,

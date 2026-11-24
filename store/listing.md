@@ -72,10 +72,6 @@ IMDb and Kinopoisk ratings; stores the user's filter settings.
 **alarms** — Refreshes the local copy of the bechdeltest.com list once a day and
 removes expired cache entries.
 
-**declarativeNetRequestWithHostAccess** — The IMDb ratings API only answers
-requests that come from imdb.com. A session rule sets that origin on the
-extension's own requests to api.graphql.imdb.com, and on nothing else.
-
 **Host permissions**
 
 - bechdeltest.com — adds ratings and filters to its pages and downloads its

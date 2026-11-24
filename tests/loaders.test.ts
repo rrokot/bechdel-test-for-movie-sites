@@ -45,6 +45,10 @@ describe('loadKinopoisk', () => {
 
     await loadKinopoisk(['tt0111161'], update);
 
+    expect(transport).toHaveBeenCalledWith(expect.objectContaining({
+      url: 'https://api.graphql.imdb.com/',
+      headers: expect.objectContaining({ 'x-imdb-client-name': 'imdb-web-next' }),
+    }));
     expect(patches.get('tt0111161')?.kinopoisk).toEqual({ status: 'missing', reason: 'no-verified-match', href: null });
     expect((await kinopoiskCache.getMany(['tt0111161'])).get('tt0111161')).toEqual({ kinopoiskId: null, rating: null, votes: null });
   });
@@ -82,6 +86,10 @@ describe('loadImdb', () => {
     await loadImdb(['tt0000009', 'tt0111161', 'tt0000001', 'tt0000002', 'tt0000003'], update);
 
     expect(requestedUrls(transport)).toEqual(['https://api.graphql.imdb.com/']);
+    expect(transport).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({ 'x-imdb-client-name': 'imdb-web-next' }),
+    }));
     expect(patches.get('tt0000009')).toMatchObject({ imdb: { status: 'ready', rating: 6 }, genres: ['Horror'] });
     expect(patches.get('tt0111161')).toMatchObject({ imdb: { status: 'ready', rating: 9.3 }, genres: ['Drama'] });
     expect(patches.get('tt0000001')).toMatchObject({ imdb: { status: 'missing' } });
