@@ -1,161 +1,323 @@
-.bte-badge {
-  --bte-border: #ccc;
-  --bte-bg: #fafafa;
-  --bte-fg: #777;
+/* Built on bechdeltest.com's own design tokens (btml.css), with fallbacks in
+   case the site renames them. */
+:root {
+  --bte-paper: var(--paper, #f1eccf);
+  --bte-panel: var(--panel, #fbf8ea);
+  --bte-mint: var(--mint, #cfe8cc);
+  --bte-ink: var(--ink, #27203d);
+  --bte-muted: var(--muted, #6b6480);
+  --bte-edge: var(--edge, #d6d0b2);
+  --bte-edge-soft: var(--edge-soft, #e6e1c8);
+  --bte-accent: var(--accent, #2f6248);
+  --bte-accent-weak: var(--accent-weak, #e4efdd);
+  --bte-radius: var(--radius, 6px);
+  --bte-body: var(--body, system-ui, sans-serif);
+  --bte-data: var(--data, ui-monospace, monospace);
+  --bte-warning: #a2662f;
 
-  display: inline-block;
-  box-sizing: border-box;
-  margin-left: .25em;
-  padding: .05em .3em;
-  border: 1px solid var(--bte-border);
-  border-radius: .35em;
-  background: var(--bte-bg);
-  color: var(--bte-fg) !important;
-  font: 600 12px/1.35 Arial, sans-serif !important;
-  text-decoration: none !important;
-  vertical-align: .08em;
+  /* Shared by list rows and the filter bar so the filters sit right above
+     the marks they filter by. */
+  --bte-column: 32px;
+  --bte-column-gap: 6px;
+
+  --bte-icon-alert: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.9 3.5h1.8l-.3 5H7.4l-.3-5ZM8 10.6a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z'/%3E%3C/svg%3E");
+  --bte-icon-filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 2.5h13l-5 6v5l-3-1.5V8.5l-5-6Z'/%3E%3C/svg%3E");
+  --bte-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b6480' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+/* --- Bechdel scores ------------------------------------------------------ */
+
+/* The site draws scores 0-2 with the same red cross; each score gets its
+   own icon instead: red for 0 and 1, yellow for 2, green for 3, and a green
+   question mark for a 3 that contributors dispute. The alt text is the
+   score, "[0]" to "[3]"; the title says when it is dubious. */
+img[alt="[0]"] { content: url("./icons/score-0.svg"); }
+img[alt="[1]"] { content: url("./icons/score-1.svg"); }
+img[alt="[2]"] { content: url("./icons/score-2.svg"); }
+img[alt="[3]"] { content: url("./icons/score-3.svg"); }
+img[alt="[3]"][title*="dubious"] { content: url("./icons/score-3-dubious.svg"); }
+
+/* --- List rows: Bechdel icon | IMDb | KP | title, genres ---------------- */
+
+.bte-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bte-column-gap);
+}
+.bte-row[hidden] {
+  display: none;
+}
+.bte-row > a:first-child {
+  flex: none;
+  width: var(--bte-column);
+  text-align: center;
+}
+.bte-row > .bte-ratings {
+  flex: none;
+  margin: 0;
+}
+.bte-row > .bte-genres {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.bte-badge[data-source="imdb"] {
-  margin-right: .25em;
+
+/* --- Ratings next to a title: an IMDb pill and a KP pill ---------------- */
+
+.bte-ratings {
+  display: inline-flex;
+  gap: var(--bte-column-gap);
+  margin-right: .45em;
+  font: 600 .72rem/1 var(--bte-data);
+  vertical-align: .12em;
+  white-space: nowrap;
+}
+h1 > .bte-ratings {
+  font-size: .8rem;
+  vertical-align: .3em;
+}
+
+.bte-badge {
+  --bte-bg: var(--bte-edge-soft);
+  --bte-fg: var(--bte-muted);
+
+  box-sizing: border-box;
+  width: var(--bte-column);
+  padding: .3em 0;
+  border-radius: 999px;
+  background: var(--bte-bg);
+  color: var(--bte-fg) !important;
+  text-align: center;
+  text-decoration: none !important;
+}
+.bte-badge[href]:hover {
+  background: color-mix(in srgb, var(--bte-bg), var(--bte-fg) 12%);
+}
+
+.bte-badge[data-tier="excellent"] { --bte-bg: var(--bte-mint); --bte-fg: var(--bte-accent); }
+.bte-badge[data-tier="good"] { --bte-bg: #e3ecd2; --bte-fg: #4a6a26; }
+.bte-badge[data-tier="average"] { --bte-bg: #f4e6b4; --bte-fg: #765a14; }
+.bte-badge[data-tier="weak"] { --bte-bg: #f3dcc3; --bte-fg: #86461b; }
+.bte-badge[data-tier="bad"] { --bte-bg: #f1d3cf; --bte-fg: #8b2f2a; }
+
+/* Loading and failed states are drawn, not written. */
+.bte-badge[data-state="loading"]::before,
+.bte-badge[data-state="error"]::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -.15em;
 }
 .bte-badge[data-state="loading"] {
-  --bte-border: #bbb;
-  --bte-bg: #f3f3f3;
-  --bte-fg: #666;
+  animation: bte-pulse 1.2s ease-in-out infinite;
 }
-.bte-badge[data-tier="excellent"] { --bte-border: #16803c; --bte-bg: #c9f2d5; --bte-fg: #084d25; }
-.bte-badge[data-tier="good"] { --bte-border: #70a52b; --bte-bg: #e5f4c7; --bte-fg: #355d0d; }
-.bte-badge[data-tier="average"] { --bte-border: #c99900; --bte-bg: #fff0ad; --bte-fg: #624800; }
-.bte-badge[data-tier="weak"] { --bte-border: #db7818; --bte-bg: #ffe0b5; --bte-fg: #713407; }
-.bte-badge[data-tier="bad"] { --bte-border: #c13b3b; --bte-bg: #ffd1d1; --bte-fg: #781d1d; }
-.bte-badge[href]:hover {
-  filter: brightness(.94);
+.bte-badge[data-state="error"]::before {
+  background: var(--bte-warning);
+  mask: var(--bte-icon-alert) center / contain no-repeat;
+}
+
+@keyframes bte-pulse {
+  50% { opacity: .45; }
 }
 
 .bte-genres {
-  margin-left: .15em;
-  color: #777;
-  font: 11px/1.2 Arial, sans-serif;
+  margin-left: .5em;
+  color: var(--bte-muted);
+  font: .75rem/1.2 var(--bte-body);
 }
+
+/* --- Filter bar above the list ------------------------------------------ */
 
 .bte-filters {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .35em .6em;
-  margin: 0 0 .65em;
-  color: #555;
-  font: 12px/1.2 Arial, sans-serif;
+  align-items: flex-end;
+  gap: var(--bte-column-gap);
+  margin: 0 0 1em;
+  color: var(--bte-muted);
+  font: 600 .78rem/1 var(--bte-body);
 }
-.bte-filters label {
-  display: inline-flex;
+.bte-filter {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: .18em;
+  gap: 4px;
+  width: var(--bte-column);
+}
+.bte-filter-name {
+  font: 600 .65rem/1 var(--bte-body);
   white-space: nowrap;
 }
+.bte-filter-name[class*="bte-logo-"] {
+  width: 100%;
+  height: 14px;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.bte-logo-bechdel {
+  /* The extension's own icon; 48px stays sharp on high-density screens. */
+  background-image: url("../../static/icons/48.png");
+}
+.bte-logo-genres {
+  background-image: url("./icons/genres.svg");
+}
+.bte-logo-imdb {
+  background-image: url("./icons/imdb.svg");
+}
+.bte-logo-kinopoisk {
+  background-image: url("./icons/kinopoisk.svg");
+}
+.bte-rating-filters {
+  display: flex;
+  gap: var(--bte-column-gap);
+}
+
 .bte-filters select,
 .bte-genre-filter summary {
   box-sizing: border-box;
-  height: 21px;
-  border: 1px solid #aaa;
-  border-radius: 2px;
-  background: #fff;
-  color: #222;
-  font: 11px/1.2 Arial, sans-serif;
+  height: 22px;
+  border: 1px solid var(--bte-edge);
+  border-radius: 4px;
+  background-color: var(--bte-paper);
+  color: var(--bte-ink);
+  font: 400 .78rem/1 var(--bte-data);
+  cursor: pointer;
 }
 .bte-filters select {
-  min-width: 36px;
-  padding: 0 2px;
+  width: calc(var(--bte-column) - 2px);
+  appearance: none;
+  padding: 0 8px 0 0;
+  background: var(--bte-icon-chevron) right 3px center / 6px no-repeat var(--bte-paper);
+  text-align-last: center;
 }
-
-.bte-status {
-  display: inline-flex;
-  align-items: center;
-  gap: .4em;
-  margin-left: auto;
-  color: #666;
-  font: 11px/1.2 Arial, sans-serif;
-  white-space: nowrap;
+.bte-filters select:hover,
+.bte-genre-filter summary:hover {
+  border-color: var(--bte-accent);
 }
-.bte-status[data-state="failed"] {
-  color: #a11;
-}
-.bte-status[data-state="loading"]::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border: 2px solid #ccc;
-  border-top-color: #666;
-  border-radius: 50%;
-  animation: bte-spin .7s linear infinite;
-}
-@keyframes bte-spin {
-  to { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bte-status[data-state="loading"]::before {
-    animation: none;
-  }
+/* A filter that is set stands out from the ones left unset. */
+.bte-filters select:not(:has(option[value=""]:checked)) {
+  border-color: var(--bte-accent);
+  background-color: var(--bte-accent-weak);
+  color: var(--bte-accent);
+  font-weight: 600;
 }
 
 .bte-genre-filter {
   position: relative;
 }
 .bte-genre-filter summary {
-  padding: 3px 5px;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: calc(var(--bte-column) - 2px);
+  padding: 0;
   list-style: none;
 }
 .bte-genre-filter summary::-webkit-details-marker {
   display: none;
 }
-.bte-genre-filter[open] summary {
-  background: #eee;
+.bte-genre-filter summary::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  mask: var(--bte-icon-filter) center / contain no-repeat;
 }
+.bte-genre-filter[open] summary {
+  background-color: var(--bte-accent-weak);
+}
+.bte-genre-count:empty {
+  display: none;
+}
+.bte-genre-filter:has(.bte-genre-count:not(:empty)) summary {
+  border-color: var(--bte-accent);
+  background-color: var(--bte-accent-weak);
+  color: var(--bte-accent);
+  font-weight: 600;
+}
+
 .bte-genre-options {
   position: absolute;
-  z-index: 1000;
-  top: calc(100% + 2px);
+  z-index: 50;
+  top: calc(100% + 6px);
   left: 0;
+  /* IMDb has about two dozen genres: three columns fit them all without a
+     scrollbar. */
   display: grid;
-  gap: 3px;
-  min-width: 145px;
-  max-height: 260px;
-  overflow: auto;
-  padding: 7px;
-  border: 1px solid #999;
-  background: #fff;
-  box-shadow: 2px 3px 8px rgb(0 0 0 / 18%);
+  grid-template-columns: repeat(3, max-content);
+  gap: 1px 2px;
+  padding: 4px;
+  border: 1px solid var(--bte-edge);
+  border-radius: var(--bte-radius);
+  background: var(--bte-panel);
+  box-shadow: 0 8px 24px rgb(39 32 61 / 18%);
 }
 .bte-genre-option {
-  position: relative;
-  width: 100%;
-  padding: 3px 5px 3px 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
   border: 0;
-  border-radius: 2px;
+  border-radius: 4px;
   background: transparent;
-  color: #222;
+  color: var(--bte-ink);
   cursor: pointer;
   text-align: left;
-  font: 11px/1.2 Arial, sans-serif;
+  white-space: nowrap;
+  font: 400 .8rem/1.2 var(--bte-body);
 }
 .bte-genre-option::before {
-  content: "×";
-  position: absolute;
-  left: 5px;
-  color: #a11;
-  font-weight: bold;
-  opacity: 0;
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bte-accent);
 }
 .bte-genre-option:hover {
-  background: #eee;
+  background: var(--bte-accent-weak);
 }
 .bte-genre-option[aria-pressed="true"] {
-  background: #ffe3e3;
-  color: #811;
+  color: var(--bte-muted);
   text-decoration: line-through;
 }
 .bte-genre-option[aria-pressed="true"]::before {
-  opacity: 1;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--bte-edge);
+}
+
+/* --- Loading progress and failures --------------------------------------- */
+
+.bte-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--bte-warning);
+  font: 600 .78rem/1 var(--bte-data);
+}
+.bte-status::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+}
+.bte-status[data-state="loading"]::before {
+  border-radius: 50%;
+  background: conic-gradient(var(--bte-accent) calc(var(--bte-progress, 0) * 1turn), var(--bte-edge) 0);
+  mask: radial-gradient(circle, transparent 3.5px, #000 4px);
+}
+.bte-status[data-state="failed"]::before {
+  background: currentColor;
+  mask: var(--bte-icon-alert) center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bte-badge[data-state="loading"] {
+    animation: none;
+  }
 }

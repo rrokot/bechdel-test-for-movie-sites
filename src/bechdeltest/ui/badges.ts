@@ -60,9 +60,14 @@ const createBadge = (source: Source) => {
 
 const createView = (anchor: Element, row: HTMLElement | null): MovieView => {
   const badges = { kinopoisk: createBadge('kinopoisk'), imdb: createBadge('imdb') };
+  const ratings = document.createElement('span');
+  ratings.className = 'bte-ratings';
+  ratings.append(badges.imdb, badges.kinopoisk);
   const genres = document.createElement('span');
   genres.className = 'bte-genres';
-  anchor.before(badges.kinopoisk, badges.imdb);
+  anchor.before(ratings);
+  // List rows become a grid of fixed columns that the filter bar lines up with.
+  row?.classList.add('bte-row');
   anchor.after(genres);
   return { row, badges, genres };
 };
@@ -71,7 +76,7 @@ const badgeContent = (source: Source, state: SourceState) => {
   const label = LABELS[source];
   switch (state.status) {
     case 'loading':
-      return { text: '…', title: `Loading ${label} rating`, href: null };
+      return { text: '', title: `Loading ${label} rating`, href: null };
     case 'ready': {
       const rating = ratingFormat.format(state.rating);
       const votes = state.votes ? `\nVotes: ${votesFormat.format(state.votes)}` : '';
@@ -80,7 +85,7 @@ const badgeContent = (source: Source, state: SourceState) => {
     case 'missing':
       return { text: '—', title: `${label}: ${describeReason(source, state.reason)}`, href: state.href };
     case 'error':
-      return { text: '!', title: `${label}: ${describeReason(source, state.reason)}`, href: null };
+      return { text: '', title: `${label}: ${describeReason(source, state.reason)}`, href: null };
   }
 };
 
@@ -105,7 +110,8 @@ export const renderMovie = (movie: Movie) => {
   for (const view of movie.views) {
     renderBadge(view.badges.kinopoisk, 'kinopoisk', movie.kinopoisk);
     renderBadge(view.badges.imdb, 'imdb', movie.imdb);
-    view.genres.textContent = movie.genres?.join(', ') ?? '';
+    view.genres.textContent = movie.genres?.join(' · ') ?? '';
+    view.genres.title = view.genres.textContent;
     view.genres.hidden = !movie.genres?.length;
   }
 };

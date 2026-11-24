@@ -39,6 +39,7 @@ const options: BuildOptions = {
   ],
   outdir: OUT_DIR,
   bundle: true,
+  loader: { '.svg': 'dataurl', '.png': 'dataurl' },
   format: 'iife',
   target: 'chrome130',
   minify: !watch,

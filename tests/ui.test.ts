@@ -33,7 +33,7 @@ describe('collectMovies', () => {
     expect(document.querySelectorAll('.bte-badge')).toHaveLength(8);
 
     const title = document.querySelector('#movie-12212')!;
-    expect(title.previousElementSibling?.getAttribute('data-source')).toBe('imdb');
+    expect([...title.previousElementSibling!.children].map((badge) => badge.getAttribute('data-source'))).toEqual(['imdb', 'kinopoisk']);
     expect(title.nextElementSibling?.className).toBe('bte-genres');
   });
 
@@ -43,7 +43,7 @@ describe('collectMovies', () => {
 
     expect([...movies.keys()]).toEqual(['tt0844760']);
     expect(movies.get('tt0844760')?.views[0]?.row).toBeNull();
-    expect(document.querySelector('h1 > .bte-badge[data-source="kinopoisk"]')).not.toBeNull();
+    expect(document.querySelector('h1 > .bte-ratings > .bte-badge[data-source="kinopoisk"]')).not.toBeNull();
   });
 
   it('renders every state of a badge', () => {
@@ -58,10 +58,10 @@ describe('collectMovies', () => {
 
     expect(kinopoisk).toMatchObject({ textContent: '7.3', title: 'KP rating: 7.3\nVotes: 12,345', href: 'https://www.kinopoisk.ru/film/1/' });
     expect(kinopoisk.dataset.tier).toBe('good');
-    expect(imdb.textContent).toBe('!');
+    expect(imdb.textContent).toBe('');
     expect(imdb.title).toBe('IMDb: Could not reach IMDb');
     expect(imdb.hasAttribute('href')).toBe(false);
-    expect(movie.views[0]!.genres.textContent).toBe('Horror, Thriller');
+    expect(movie.views[0]!.genres.textContent).toBe('Horror · Thriller');
   });
 
   it('assigns tiers to every rating', () => {
@@ -115,10 +115,10 @@ describe('mountPanel', () => {
     const panel = mountPanel(list, { ...DEFAULT_FILTERS, excludedGenres: ['Horror'] }, onChange);
 
     expect(list.querySelector('h2')?.previousElementSibling?.className).toBe('bte-filters');
-    expect([...list.querySelectorAll<HTMLLabelElement>('.bte-filters label')].map(({ firstChild, title }) => [firstChild?.textContent, title]))
-      .toEqual([['KP ≥', 'Kinopoisk rating'], ['IMDb ≥', ''], ['B ≥', 'Bechdel Test score']]);
+    expect([...list.querySelectorAll<HTMLLabelElement>('.bte-filters label')].map(({ title }) => title))
+      .toEqual(['Minimum Bechdel Test score', 'Minimum IMDb rating', 'Minimum Kinopoisk rating']);
 
-    const select = list.querySelector('select')!;
+    const select = list.querySelector<HTMLSelectElement>('label[title="Minimum Kinopoisk rating"] select')!;
     select.value = '8';
     select.dispatchEvent(new Event('change'));
     expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kinopoiskMin: 8, excludedGenres: ['Horror'] });
@@ -131,7 +131,7 @@ describe('mountPanel', () => {
     expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_FILTERS, kinopoiskMin: 8, excludedGenres: ['Horror', 'Drama'] });
 
     panel.setProgress({ total: 4, pending: 1, failed: 0 });
-    expect(list.querySelector('.bte-status')?.textContent).toBe('Ratings 3 / 4');
+    expect(list.querySelector<HTMLElement>('.bte-status')?.title).toBe('Loading ratings: 3 of 4');
   });
 });
 

@@ -5,11 +5,14 @@ type Progress = ReturnType<typeof progress>;
 
 type NumericFilter = 'kinopoiskMin' | 'imdbMin' | 'bechdelMin';
 
-// Abbreviated labels get a tooltip that spells out what they filter by.
-const CONTROLS: { key: NumericFilter; label: string; title?: string; values: number[] }[] = [
-  { key: 'kinopoiskMin', label: 'KP ≥', title: 'Kinopoisk rating', values: [5, 6, 7, 8, 9] },
-  { key: 'imdbMin', label: 'IMDb ≥', values: [5, 6, 7, 8, 9] },
-  { key: 'bechdelMin', label: 'B ≥', title: 'Bechdel Test score', values: [1, 2, 3] },
+// In the order of the columns they sit above: the site's own Bechdel icon,
+// then the IMDb and KP rating pills.
+// Each column is named by a picture: the extension's Bechdel icon, then the
+// IMDb and Kinopoisk logos.
+const CONTROLS: { key: NumericFilter; name: string; logo: string; title: string; values: number[] }[] = [
+  { key: 'bechdelMin', name: 'Bechdel', logo: 'bechdel', title: 'Minimum Bechdel Test score', values: [1, 2, 3] },
+  { key: 'imdbMin', name: 'IMDb', logo: 'imdb', title: 'Minimum IMDb rating', values: [5, 6, 7, 8, 9] },
+  { key: 'kinopoiskMin', name: 'Kinopoisk', logo: 'kinopoisk', title: 'Minimum Kinopoisk rating', values: [5, 6, 7, 8, 9] },
 ];
 
 type Props = Partial<{
@@ -20,6 +23,7 @@ type Props = Partial<{
   type: string;
   role: string;
   ariaLive: string;
+  ariaLabel: string;
   hidden: boolean;
 }>;
 
@@ -34,8 +38,8 @@ const createElement = <K extends keyof HTMLElementTagNameMap>(
 };
 
 const createSelect = (values: number[]) => createElement('select', {}, [
-  createElement('option', { value: '', textContent: '-' }),
-  ...values.map((value) => createElement('option', { value: String(value), textContent: String(value) })),
+  createElement('option', { value: '', textContent: '–' }),
+  ...values.map((value) => createElement('option', { value: String(value), textContent: `${value}+` })),
 ]);
 
 export const mountPanel = (
@@ -57,19 +61,31 @@ export const mountPanel = (
     return [key, select];
   }));
 
-  const genreSummary = createElement('summary');
+  const genreCount = createElement('span', { className: 'bte-genre-count' });
+  const genreSummary = createElement('summary', { title: 'Hide genres' }, [genreCount]);
   const genreOptions = createElement('div', { className: 'bte-genre-options' });
   const status = createElement('span', { className: 'bte-status', role: 'status', ariaLive: 'polite', hidden: true });
 
+  const [bechdelFilter, ...ratingFilters] = CONTROLS.map(({ key, name, logo, title }) => (
+    createElement('label', { className: 'bte-filter', title }, [
+      createElement('span', { className: `bte-filter-name bte-logo-${logo}`, role: 'img', ariaLabel: name }),
+      selects.get(key)!,
+    ])
+  ));
   const panel = createElement('div', { className: 'bte-filters' }, [
-    ...CONTROLS.map(({ key, label, title }) => createElement('label', title ? { title } : {}, [label, selects.get(key)!])),
-    createElement('details', { className: 'bte-genre-filter' }, [genreSummary, genreOptions]),
+    bechdelFilter!,
+    createElement('div', { className: 'bte-rating-filters' }, ratingFilters),
+    createElement('div', { className: 'bte-filter' }, [
+      createElement('span', { className: 'bte-filter-name bte-logo-genres', role: 'img', ariaLabel: 'Genres' }),
+      createElement('details', { className: 'bte-genre-filter' }, [genreSummary, genreOptions]),
+    ]),
     status,
   ]);
 
   const renderGenreState = () => {
     const excluded = new Set(filters.excludedGenres);
-    genreSummary.textContent = excluded.size ? `Genre − (${excluded.size})` : 'Genre −';
+    genreCount.textContent = excluded.size ? String(excluded.size) : '';
+    genreSummary.ariaLabel = excluded.size ? `Hidden genres: ${excluded.size}` : 'Hide genres';
     for (const button of genreOptions.querySelectorAll<HTMLButtonElement>('button')) {
       const isExcluded = excluded.has(button.value);
       button.ariaPressed = String(isExcluded);
@@ -104,20 +120,25 @@ export const mountPanel = (
     renderGenreState();
   };
 
+  // A ring fills up while ratings load; afterwards a warning icon remains only
+  // if some of them failed.
   const setProgress = ({ total, pending, failed }: Progress) => {
+    const loaded = total - pending;
     if (pending) {
       status.dataset.state = 'loading';
-      status.textContent = `Ratings ${total - pending} / ${total}`;
-      status.title = '';
+      status.style.setProperty('--bte-progress', String(total ? loaded / total : 0));
+      status.textContent = '';
+      status.title = `Loading ratings: ${loaded} of ${total}`;
     } else if (failed) {
       status.dataset.state = 'failed';
-      status.textContent = `${failed} unavailable`;
-      status.title = 'Some ratings could not be loaded and will be retried on the next visit';
+      status.textContent = String(failed);
+      status.title = `${failed} ratings could not be loaded and will be retried on the next visit`;
     } else {
       status.dataset.state = 'idle';
       status.textContent = '';
       status.title = '';
     }
+    status.ariaLabel = status.title;
     status.hidden = status.dataset.state === 'idle';
   };
 
